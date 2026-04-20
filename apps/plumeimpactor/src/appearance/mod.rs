@@ -26,14 +26,29 @@ pub(crate) fn p_font() -> iced::Font {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub(crate) enum PlumeTheme {
     PlumeDark,
+    Mint,
+    Blue,
+    Red,
 }
 
 impl PlumeTheme {
+    pub(crate) const ALL: &'static [PlumeTheme] = &[
+        PlumeTheme::PlumeDark,
+        PlumeTheme::Mint,
+        PlumeTheme::Blue,
+        PlumeTheme::Red,
+    ];
+
     pub(crate) fn to_iced_theme(self) -> Theme {
-        Self::plume_dark()
+        match self {
+            Self::PlumeDark => Self::plume_dark(),
+            Self::Mint => Self::mint(),
+            Self::Blue => Self::blue(),
+            Self::Red => Self::red(),
+        }
     }
 
     fn plume_dark() -> Theme {
@@ -47,6 +62,63 @@ impl PlumeTheme {
                 danger: color!(0xe78a8a),
                 warning: color!(0xf4b8c4),
             },
+        )
+    }
+
+    fn mint() -> Theme {
+        Theme::custom(
+            "Mint".to_string(),
+            iced::theme::Palette {
+                background: color!(0x1e2e28),
+                text: color!(0xd4ece1),
+                primary: color!(0x55b182),
+                success: color!(0x7dcda3),
+                danger: color!(0xe27a7a),
+                warning: color!(0xe6c37c),
+            },
+        )
+    }
+
+    fn blue() -> Theme {
+        Theme::custom(
+            "Blue".to_string(),
+            iced::theme::Palette {
+                background: color!(0x1a2130),
+                text: color!(0xd6e5fa),
+                primary: color!(0x4d8bd9),
+                success: color!(0x7bb1e6),
+                danger: color!(0xe46c6c),
+                warning: color!(0xe8c17b),
+            },
+        )
+    }
+
+    fn red() -> Theme {
+        Theme::custom(
+            "Red".to_string(),
+            iced::theme::Palette {
+                background: color!(0x2d1a1b),
+                text: color!(0xf7d9da),
+                primary: color!(0xd9464e),
+                success: color!(0xdf7c7e),
+                danger: color!(0xe84a4a),
+                warning: color!(0xe3b772),
+            },
+        )
+    }
+}
+
+impl std::fmt::Display for PlumeTheme {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::PlumeDark => "Plume Dark",
+                Self::Mint => "Mint",
+                Self::Blue => "Blue",
+                Self::Red => "Red",
+            }
         )
     }
 }

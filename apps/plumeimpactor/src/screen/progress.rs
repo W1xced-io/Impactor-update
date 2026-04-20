@@ -25,6 +25,7 @@ pub struct ProgressScreen {
     pub progress: i32,
     pub is_installing: bool,
     pub progress_rx: Option<ProgressReceiver>,
+    pub package_name: Option<String>,
 }
 
 impl ProgressScreen {
@@ -34,14 +35,16 @@ impl ProgressScreen {
             progress: 0,
             is_installing: false,
             progress_rx: None,
+            package_name: None,
         }
     }
 
-    pub fn start_installation(&mut self, rx: ProgressReceiver) {
+    pub fn start_installation(&mut self, rx: ProgressReceiver, package_name: Option<String>) {
         self.is_installing = true;
         self.progress = 0;
         self.status = "Idle.".to_string();
         self.progress_rx = Some(rx);
+        self.package_name = package_name;
     }
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
@@ -92,6 +95,15 @@ impl ProgressScreen {
                 self.status = t!("progress_finished").to_string();
                 self.progress_rx = None;
                 self.is_installing = false;
+                
+                if let Some(ref pkg_name) = self.package_name {
+                    if pkg_name.to_lowercase().contains("livecontainer") {
+                        let _ = notify_rust::Notification::new()
+                            .summary("LiveContainer Installed")
+                            .body("Import the generated P12 certificate in Settings -> Export P12 to finish code signing configurations!")
+                            .show();
+                    }
+                }
 
                 Task::none()
             }

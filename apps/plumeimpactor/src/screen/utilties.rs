@@ -47,6 +47,7 @@ pub enum Message {
     PairResult(Result<(), String>),
     InstallPairingResult(String, Result<(), String>),
     ToggleRPPairing(bool),
+    OpenIpaLibrary,
 }
 
 #[derive(Debug, Clone)]
@@ -242,6 +243,7 @@ impl UtilitiesScreen {
                 self.rppairing_enabled = enabled;
                 Task::perform(async move { Message::RefreshApps(enabled) }, |msg| msg)
             }
+            Message::OpenIpaLibrary => Task::none(),
         }
     }
 
@@ -301,6 +303,13 @@ impl UtilitiesScreen {
                 .spacing(appearance::THEME_PADDING),
             );
         }
+
+        content = content.push(
+            button(appearance::icon_text(appearance::FILE, t!("utilities_ipa_library"), None))
+                .on_press(Message::OpenIpaLibrary)
+                .style(appearance::p_button)
+                .width(iced::Length::Fill),
+        );
 
         let toggle = toggler(self.rppairing_enabled)
             .label(t!("utilities_use_remote_pairing"))

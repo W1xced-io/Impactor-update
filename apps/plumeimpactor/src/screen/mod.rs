@@ -1,4 +1,5 @@
 pub(crate) mod general;
+pub(crate) mod ipa_library;
 mod package;
 mod progress;
 pub(crate) mod settings;
@@ -74,6 +75,7 @@ pub enum Message {
     SettingsScreen(settings::Message),
     InstallerScreen(package::Message),
     ProgressScreen(progress::Message),
+    IpaLibraryScreen(ipa_library::Message),
     CertificateResetRequested(crate::certificate_reset::ConfirmationRequest),
     ConfirmCertificateReset,
     CancelCertificateReset,
@@ -93,6 +95,13 @@ pub struct Impactor {
     login_windows: std::collections::HashMap<window::Id, login_window::LoginWindow>,
     pending_installation: bool,
     certificate_reset_queue: VecDeque<crate::certificate_reset::ConfirmationRequest>,
+    pub app_settings: crate::defaults::AppSettings,
+}
+
+impl Impactor {
+    pub fn theme(&self) -> appearance::PlumeTheme {
+        self.app_settings.theme
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -102,6 +111,7 @@ pub enum ImpactorScreenType {
     Settings,
     Installer,
     Progress,
+    IpaLibrary,
 }
 
 enum ImpactorScreen {
@@ -110,6 +120,7 @@ enum ImpactorScreen {
     Settings(settings::SettingsScreen),
     Installer(package::PackageScreen),
     Progress(progress::ProgressScreen),
+    IpaLibrary(ipa_library::IpaLibraryScreen),
 }
 
 impl Impactor {
@@ -139,6 +150,7 @@ impl Impactor {
                 login_windows: std::collections::HashMap::new(),
                 pending_installation: false,
                 certificate_reset_queue: VecDeque::new(),
+                app_settings: crate::defaults::AppSettings::load(),
             },
             open_task,
         )
@@ -280,6 +292,7 @@ impl Impactor {
                     ImpactorScreen::Installer(_) => ImpactorScreenType::Progress,
                     ImpactorScreen::Settings(_) => return Task::none(),
                     ImpactorScreen::Progress(_) => return Task::none(),
+                    ImpactorScreen::IpaLibrary(_) => return Task::none(),
                 };
 
                 self.navigate_to_screen(next_screen);
@@ -296,7 +309,11 @@ impl Impactor {
                     Task::none()
                 }
                 ImpactorScreen::Progress(_) => {
-                    self.navigate_to_screen(ImpactorScreenType::Main);
+                    if let Some(prev) = self.previous_screen.take() {
+                        self.current_screen = *prev;
+                    } else {
+                        self.navigate_to_screen(ImpactorScreenType::Main);
+                    }
                     Task::none()
                 }
                 ImpactorScreen::Settings(_) => {
@@ -305,6 +322,10 @@ impl Impactor {
                     } else {
                         self.navigate_to_screen(ImpactorScreenType::Main);
                     }
+                    Task::none()
+                }
+                ImpactorScreen::IpaLibrary(_) => {
+                    self.navigate_to_screen(ImpactorScreenType::Utilities);
                     Task::none()
                 }
             },
@@ -463,6 +484,9 @@ impl Impactor {
             }
             Message::UtilitiesScreen(msg) => {
                 if let ImpactorScreen::Utilities(ref mut screen) = self.current_screen {
+                    if let utilties::Message::OpenIpaLibrary = msg {
+                        return Task::done(Message::NavigateToScreen(ImpactorScreenType::IpaLibrary));
+                    }
                     screen.update(msg).map(Message::UtilitiesScreen)
                 } else {
                     Task::none()
@@ -572,6 +596,11 @@ impl Impactor {
                             }
                             screen.update(msg).map(Message::SettingsScreen)
                         }
+                        settings::Message::ThemeSelected(theme) => {
+                            self.app_settings.theme = theme;
+                            let _ = self.app_settings.save();
+                            Task::none()
+                        }
                         _ => screen.update(msg).map(Message::SettingsScreen),
                     }
                 } else {
@@ -622,6 +651,30 @@ impl Impactor {
                         }
                         _ => screen.update(msg).map(Message::ProgressScreen),
                     }
+                } else {
+                    Task::none()
+                }
+            }
+            Message::IpaLibraryScreen(msg) => {
+                if let ImpactorScreen::IpaLibrary(ref mut screen) = self.current_screen {
+                    let task = screen.update(msg.clone()).map(Message::IpaLibraryScreen);
+                    if let ipa_library::Message::NavigateToInstaller(package) = msg {
+                        let mut options = SignerOptions::default();
+                        package.load_into_signer_options(&mut options);
+                        
+                        // Save current as previous so we can return to Library
+                        self.previous_screen = Some(Box::new(std::mem::replace(
+                            &mut self.current_screen,
+                            ImpactorScreen::IpaLibrary(ipa_library::IpaLibraryScreen::new()),
+                        )));
+
+                        self.current_screen = ImpactorScreen::Installer(
+                            package::PackageScreen::new(Some(package), options),
+                        );
+                        // Automatically trigger the installation request to make it seamless
+                        return Task::done(Message::InstallerScreen(package::Message::RequestInstallation));
+                    }
+                    task
                 } else {
                     Task::none()
                 }
@@ -835,12 +888,13 @@ impl Impactor {
             ImpactorScreen::Main(screen) => screen.view().map(Message::MainScreen),
             ImpactorScreen::Utilities(screen) => screen.view().map(Message::UtilitiesScreen),
             ImpactorScreen::Settings(screen) => screen
-                .view(&self.account_store)
+                .view(&self.account_store, self.theme())
                 .map(Message::SettingsScreen),
             ImpactorScreen::Installer(screen) => {
                 screen.view(has_device).map(Message::InstallerScreen)
             }
             ImpactorScreen::Progress(screen) => screen.view().map(Message::ProgressScreen),
+            ImpactorScreen::IpaLibrary(screen) => screen.view().map(Message::IpaLibraryScreen),
         }
     }
 
@@ -857,6 +911,10 @@ impl Impactor {
                 .on_press(Message::PreviousScreen)
                 .style(appearance::s_button)
         } else if matches!(self.current_screen, ImpactorScreen::Utilities(_)) {
+            button(appearance::icon(appearance::CHEVRON_BACK))
+                .on_press(Message::PreviousScreen)
+                .style(appearance::s_button)
+        } else if matches!(self.current_screen, ImpactorScreen::IpaLibrary(_)) {
             button(appearance::icon(appearance::CHEVRON_BACK))
                 .on_press(Message::PreviousScreen)
                 .style(appearance::s_button)
@@ -958,6 +1016,9 @@ impl Impactor {
             ImpactorScreenType::Progress => {
                 self.current_screen = ImpactorScreen::Progress(progress::ProgressScreen::new());
             }
+            ImpactorScreenType::IpaLibrary => {
+                self.current_screen = ImpactorScreen::IpaLibrary(ipa_library::IpaLibraryScreen::new());
+            }
             _ => {}
         }
     }
@@ -980,7 +1041,8 @@ impl Impactor {
             let progress_rx = std::sync::Arc::new(std::sync::Mutex::new(rx));
 
             let mut progress_screen = progress::ProgressScreen::new();
-            progress_screen.start_installation(progress_rx.clone());
+            use plume_utils::PlistInfoTrait;
+            progress_screen.start_installation(progress_rx.clone(), package.get_name());
             self.current_screen = ImpactorScreen::Progress(progress_screen);
 
             std::thread::spawn(move || {

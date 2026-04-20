@@ -113,7 +113,7 @@ fn run_daemon() -> iced::Result {
     )
     .subscription(screen::Impactor::subscription)
     .title(APP_NAME_VERSIONED)
-    .theme(appearance::PlumeTheme::default().to_iced_theme())
+    .theme(|impactor: &screen::Impactor, _window: iced::window::Id| impactor.theme().to_iced_theme())
     .settings(defaults::default_settings())
     .run()
 }

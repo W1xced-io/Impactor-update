@@ -97,9 +97,9 @@ To properly contribute and test potentially test localizations, you can head ove
 
 ## Sponsors
 
-| Thanks to all my [sponsors](https://github.com/sponsors/claration)!! |
+| Thanks to all my [sponsors](https://github.com/sponsors/khcrysalis)!! |
 |:-:|
-| <img src="https://raw.githubusercontent.com/claration/github-sponsor-graph/main/graph.png"> |
+| <img src="https://raw.githubusercontent.com/khcrysalis/github-sponsor-graph/main/graph.png"> |
 | _**"samara is cute" - Vendicated**_ |
 
 ## Star History

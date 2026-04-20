@@ -4,8 +4,41 @@ use std::{
 };
 
 use iced::window;
+use serde::{Deserialize, Serialize};
 
 use crate::appearance;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppSettings {
+    #[serde(default)]
+    pub theme: appearance::PlumeTheme,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        Self {
+            theme: appearance::PlumeTheme::PlumeDark,
+        }
+    }
+}
+
+impl AppSettings {
+    pub fn load() -> Self {
+        let path = get_data_path().join("settings.json");
+        if let Ok(file_content) = std::fs::read_to_string(&path) {
+            if let Ok(settings) = serde_json::from_str(&file_content) {
+                return settings;
+            }
+        }
+        Self::default()
+    }
+
+    pub fn save(&self) -> Result<(), std::io::Error> {
+        let path = get_data_path().join("settings.json");
+        let content = serde_json::to_string(self)?;
+        std::fs::write(&path, content)
+    }
+}
 
 pub(crate) fn default_settings() -> iced::Settings {
     iced::Settings {

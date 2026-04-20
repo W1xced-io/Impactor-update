@@ -29,6 +29,7 @@ pub enum Message {
     FetchTeams(String),
     TeamsLoaded(String, Vec<Team>),
     ToggleAutoStart(bool),
+    ThemeSelected(appearance::PlumeTheme),
 }
 
 #[derive(Debug)]
@@ -62,7 +63,11 @@ impl SettingsScreen {
         }
     }
 
-    pub fn view<'a>(&'a self, account_store: &'a Option<AccountStore>) -> Element<'a, Message> {
+    pub fn view<'a>(
+        &'a self,
+        account_store: &'a Option<AccountStore>,
+        current_theme: appearance::PlumeTheme,
+    ) -> Element<'a, Message> {
         let Some(store) = account_store else {
             return column![text(t!("settings_loading_accounts"))]
                 .spacing(appearance::THEME_PADDING)
@@ -155,6 +160,19 @@ impl SettingsScreen {
         }
 
         let auto_start_enabled = crate::startup::auto_start_enabled();
+        content = content.push(
+            row![
+                text(t!("settings_theme")),
+                pick_list(
+                    appearance::PlumeTheme::ALL,
+                    Some(current_theme),
+                    Message::ThemeSelected
+                )
+                .style(appearance::s_pick_list)
+            ]
+            .spacing(appearance::THEME_PADDING)
+            .align_y(Alignment::Center),
+        );
         content = content.push(self.view_auto_start_toggle(auto_start_enabled));
         content = content.push(self.view_account_buttons(selected_index));
 
