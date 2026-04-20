@@ -152,6 +152,9 @@ pub(crate) fn p_progress_bar(theme: &Theme) -> iced::widget::progress_bar::Style
     iced::widget::progress_bar::Style {
         background: iced::Background::Color(lighten(palette.background, 0.05)),
         bar: iced::Background::Color(palette.primary),
-        border_radius: THEME_CORNER_RADIUS.into(),
+        border: iced::Border {
+            radius: THEME_CORNER_RADIUS.into(),
+            ..Default::default()
+        },
     }
 }

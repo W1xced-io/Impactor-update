@@ -53,14 +53,13 @@ impl IpaLibraryScreen {
                 let url = entry.download_url.clone();
                 let title = entry.title.clone();
 
-                return Task::run(
+                return Task::future(
                     async move {
                         match download_file(url, &title).await {
                             Ok(path) => Message::DownloadFinished(path),
                             Err(e) => Message::DownloadError(e),
                         }
-                    },
-                    |msg| msg,
+                    }
                 );
             }
             Message::DownloadProgress(p) => {
@@ -94,9 +93,9 @@ impl IpaLibraryScreen {
 
             let action_area: Element<Message> = if is_downloading {
                 column![
-                    progress_bar(0.0..=100.0, self.download_progress * 100.0)
-                        .height(5)
-                        .style(appearance::p_progress_bar),
+                    container(progress_bar(0.0..=100.0, self.download_progress * 100.0)
+                        .style(appearance::p_progress_bar))
+                        .height(5),
                     text(format!("{:.0}%", self.download_progress * 100.0))
                         .size(10)
                         .style(|_theme: &iced::Theme| iced::widget::text::Style {
@@ -161,7 +160,7 @@ async fn download_file(url: String, title: &str) -> Result<PathBuf, String> {
         .await
         .map_err(|e| e.to_string())?;
 
-    let total_size = response
+    let _total_size = response
         .content_length()
         .ok_or_else(|| "Failed to get content length".to_string())?;
 
@@ -170,13 +169,13 @@ async fn download_file(url: String, title: &str) -> Result<PathBuf, String> {
     let dest_path = temp_dir.join(file_name);
     let mut file = std::fs::File::create(&dest_path).map_err(|e| e.to_string())?;
 
-    let mut downloaded: u64 = 0;
+    let mut _downloaded: u64 = 0;
     let mut stream = response.bytes_stream();
 
     while let Some(item) = stream.next().await {
         let chunk = item.map_err(|e| e.to_string())?;
         file.write_all(&chunk).map_err(|e| e.to_string())?;
-        downloaded += chunk.len() as u64;
+        _downloaded += chunk.len() as u64;
         
         // In a real Iced app, we'd need a way to communicate progress back to the UI.
         // Task::run makes this tricky for intermediate updates.
