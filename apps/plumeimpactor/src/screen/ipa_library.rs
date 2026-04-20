@@ -32,6 +32,7 @@ pub struct IpaLibraryScreen {
 
 const LIVE_CONTAINER_URL: &str = "https://github.com/LiveContainer/LiveContainer/releases/latest/download/LiveContainer.ipa";
 
+impl IpaLibraryScreen {
     pub fn new() -> Self {
         Self {
             entries: vec![IpaEntry {
