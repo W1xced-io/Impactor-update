@@ -4,7 +4,7 @@
     "description": "LiveContainer allows running iOS apps natively via JIT, using dynamic code signing and injection without a jailbreak.",
     "version": "Latest",
     "bundle_id": "com.kdt.livecontainer",
-    "icon_url": "https://raw.githubusercontent.com/LiveContainer/LiveContainer/main/LiveContainer/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60%403x.png",
+    "icon_path": "icons/livecontainer.png",
     "download_url": "https://github.com/LiveContainer/LiveContainer/releases/latest/download/LiveContainer.ipa",
     "category": "container"
   },
@@ -13,7 +13,7 @@
     "description": "A rootless semi-untethered jailbreak for iOS 15.0 - 16.5.1 (arm64e) and iOS 15.0 - 16.7.15 (arm64).",
     "version": "2.5b2",
     "bundle_id": "com.opa334.Dopamine",
-    "icon_url": "https://raw.githubusercontent.com/opa334/Dopamine/master/Dopamine/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60%403x.png",
+    "icon_path": "icons/Dopamine.png",
     "download_url": "https://github.com/opa334/Dopamine/releases/download/2.5b2/Dopamine.ipa",
     "category": "jailbreak"
   },
@@ -22,7 +22,7 @@
     "description": "Supports iOS 14.0 - 16.6.1 (arm64/arm64e) to install TrollStore using different methods depending on the device/OS.",
     "version": "1.0.3",
     "bundle_id": "com.alfiecg24.TrollInstallerX",
-    "icon_url": "https://raw.githubusercontent.com/alfiecg24/TrollInstallerX/main/TrollInstallerX/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60%403x.png",
+    "icon_path": "icons/TrollInstallerX.png",
     "download_url": "https://github.com/alfiecg24/TrollInstallerX/releases/download/1.0.3/TrollInstallerX.ipa",
     "category": "utility"
   },
@@ -31,7 +31,7 @@
     "description": "Multi-tool for iOS 15.0-18.1. Features: Font Overwrite, File Manager (Full Disk r/w), 3 App Bypass, Performance tweaks and more.",
     "version": "Latest",
     "bundle_id": "com.roooot.lara",
-    "icon_url": "https://raw.githubusercontent.com/rooootdev/lara/main/Lara/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60%403x.png",
+    "icon_path": "icons/lara.png",
     "download_url": "https://github.com/rooootdev/lara/releases/latest/download/lara.ipa",
     "category": "utility"
   }

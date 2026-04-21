@@ -15,9 +15,44 @@ pub struct IpaEntry {
     pub description: String,
     pub download_url: String,
     #[serde(default)]
-    pub icon_url: Option<String>,
+    pub icon_path: Option<String>,
     #[serde(default = "default_category")]
     pub category: String,
+}
+
+use std::sync::OnceLock;
+use std::collections::HashMap;
+
+fn get_local_icon(path: &str) -> Option<iced::widget::image::Handle> {
+    static CACHE: OnceLock<std::sync::Mutex<HashMap<String, iced::widget::image::Handle>>> = OnceLock::new();
+    let cache = CACHE.get_or_init(|| std::sync::Mutex::new(HashMap::new()));
+    
+    let mut map = cache.lock().unwrap();
+    if let Some(handle) = map.get(path) {
+        return Some(handle.clone());
+    }
+    
+    let bytes: Option<&'static [u8]> = match path {
+        "icons/livecontainer.png" | "livecontainer.png" => Some(include_bytes!("../../../../../icons/livecontainer.png")),
+        "icons/Dopamine.png" | "Dopamine.png" => Some(include_bytes!("../../../../../icons/Dopamine.png")),
+        "icons/TrollInstallerX.png" | "TrollInstallerX.png" => Some(include_bytes!("../../../../../icons/TrollInstallerX.png")),
+        "icons/lara.png" | "lara.png" => Some(include_bytes!("../../../../../icons/lara.png")),
+        _ => None,
+    };
+    
+    if let Some(data) = bytes {
+        if let Ok(decoded) = ::image::load_from_memory(data) {
+            let rgba = decoded.to_rgba8();
+            let handle = iced::widget::image::Handle::from_rgba(
+                rgba.width(),
+                rgba.height(),
+                rgba.into_raw(),
+            );
+            map.insert(path.to_string(), handle.clone());
+            return Some(handle);
+        }
+    }
+    None
 }
 
 fn default_category() -> String {
@@ -266,7 +301,26 @@ impl IpaLibraryScreen {
                     .into()
             };
 
+            let icon_element: Element<Message> = if let Some(path) = &entry.icon_path {
+                if let Some(handle) = get_local_icon(path) {
+                    container(iced::widget::image(handle.clone()).width(40).height(40))
+                        .style(|_theme: &iced::Theme| container::Style {
+                            border: iced::Border {
+                                radius: 8.0.into(),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .into()
+                } else {
+                    appearance::icon(appearance::FILE).size(24).into()
+                }
+            } else {
+                appearance::icon(appearance::FILE).size(24).into()
+            };
+
             let item_row = row![
+                icon_element,
                 column![
                     text(&entry.title).size(appearance::THEME_FONT_SIZE + 4.0),
                     text(&entry.description)
