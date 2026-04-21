@@ -213,11 +213,7 @@ jobs:
           name: ${{ env.BINARY_NAME }}-macos-slice-intel
           path: dist/slices
 
-      - name: Setup Certificates
-        uses: apple-actions/import-codesign-certs@v5
-        with:
-          p12-file-base64: ${{ secrets.DEV_ID_P12_BASE64 }}
-          p12-password: ${{ secrets.DEV_ID_P12_PASSWORD }}
+
 
       - name: Download CreateDMG
         run: |
@@ -228,12 +224,11 @@ jobs:
           make macos BIN1=dist/slices/${{ env.BINARY_NAME }}-macos-arm64 BIN2=dist/slices/${{ env.BINARY_NAME }}-macos-x86_64 BUNDLE=1 ARCH=universal
           make macos BIN1=dist/slices/${{ env.BINARY_NAME_CLI }}-macos-arm64 BIN2=dist/slices/${{ env.BINARY_NAME_CLI }}-macos-x86_64 ARCH=universal
 
-      - name: Codesign
+      - name: Prepare and Ad-hoc Sign
         run: |
           mkdir -p dist/dmg
           mv dist/${{ env.BUNDLE_NAME }}.app dist/dmg/
-          codesign --deep --force --options runtime \
-            --sign "${{ secrets.DEV_ID_IDENTITY_NAME }}" dist/dmg/${{ env.BUNDLE_NAME }}.app
+          codesign --deep --force --sign - dist/dmg/${{ env.BUNDLE_NAME }}.app
 
       - name: Create DMG
         run: |
@@ -249,10 +244,7 @@ jobs:
             --app-drop-link 350 155 \
             dist/${{ env.BUNDLE_NAME }}-macos-universal.dmg dist/dmg
 
-      - name: Notarize DMG
-        run: |
-          xcrun notarytool submit dist/${{ env.BUNDLE_NAME }}-macos-universal.dmg --apple-id "${{ secrets.APPLE_ID_EMAIL }}" --password "${{ secrets.APPLE_ID_PASSWORD }}" --team-id "${{ secrets.APPLE_ID_TEAM }}" --wait
-          xcrun stapler staple dist/${{ env.BUNDLE_NAME }}-macos-universal.dmg
+
 
       - name: Upload Universal DMG
         uses: actions/upload-artifact@v4
