@@ -1018,9 +1018,12 @@ impl Impactor {
             }
             ImpactorScreenType::IpaLibrary => {
                 self.current_screen = ImpactorScreen::IpaLibrary(ipa_library::IpaLibraryScreen::new());
+                self.previous_screen = Some(Box::new(ImpactorScreen::main_menu()));
+                return Task::done(Message::IpaLibraryScreen(ipa_library::Message::FetchLibrary));
             }
             _ => {}
         }
+        Task::none()
     }
 
     fn start_installation_task(&mut self) -> Task<Message> {

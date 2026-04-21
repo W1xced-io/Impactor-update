@@ -1,4 +1,4 @@
-use iced::widget::{button, column, container, row, scrollable, text, progress_bar};
+use iced::widget::{button, column, container, row, scrollable, text, progress_bar, text_input};
 use iced::{Alignment, Element, Fill, Length, Task};
 use rust_i18n::t;
 use std::path::PathBuf;
@@ -6,18 +6,25 @@ use plume_utils::Package;
 use iced::futures::channel::mpsc;
 use iced::futures::StreamExt;
 use std::io::Write;
+use serde::{Deserialize, Serialize};
 
 use crate::appearance;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IpaEntry {
     pub title: String,
     pub description: String,
     pub download_url: String,
+    #[serde(default)]
+    pub icon_url: Option<String>,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    FetchLibrary,
+    LibraryFetched(Vec<IpaEntry>),
+    LibraryFetchError(String),
+    SearchChanged(String),
     DownloadClicked(IpaEntry),
     DownloadProgress(f32),
     DownloadFinished(PathBuf),
@@ -27,27 +34,61 @@ pub enum Message {
 
 pub struct IpaLibraryScreen {
     pub entries: Vec<IpaEntry>,
-    pub downloading_entry: Option<String>, // Title of the entry being downloaded
+    pub filtered_entries: Vec<IpaEntry>,
+    pub search_query: String,
+    pub downloading_entry: Option<String>,
     pub download_progress: f32,
+    pub is_loading: bool,
+    pub error: Option<String>,
 }
 
-const LIVE_CONTAINER_URL: &str = "https://github.com/LiveContainer/LiveContainer/releases/latest/download/LiveContainer.ipa";
+const LIBRARY_JSON_URL: &str = "https://raw.githubusercontent.com/W1xced-io/Impactor-update/main/apps.json";
 
 impl IpaLibraryScreen {
     pub fn new() -> Self {
         Self {
-            entries: vec![IpaEntry {
-                title: "LiveContainer".to_string(),
-                description: t!("ipa_library_livecontainer_desc").to_string(),
-                download_url: LIVE_CONTAINER_URL.to_string(),
-            }],
+            entries: Vec::new(),
+            filtered_entries: Vec::new(),
+            search_query: String::new(),
             downloading_entry: None,
             download_progress: 0.0,
+            is_loading: true,
+            error: None,
         }
     }
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::FetchLibrary => {
+                self.is_loading = true;
+                self.error = None;
+                return Task::future(async move {
+                    match fetch_library_json().await {
+                        Ok(entries) => Message::LibraryFetched(entries),
+                        Err(e) => Message::LibraryFetchError(e),
+                    }
+                });
+            }
+            Message::LibraryFetched(entries) => {
+                self.is_loading = false;
+                self.entries = entries.clone();
+                self.filtered_entries = entries;
+                Task::none()
+            }
+            Message::LibraryFetchError(e) => {
+                self.is_loading = false;
+                self.error = Some(e);
+                Task::none()
+            }
+            Message::SearchChanged(query) => {
+                self.search_query = query.clone();
+                let lower_query = query.to_lowercase();
+                self.filtered_entries = self.entries.iter()
+                    .filter(|e| e.title.to_lowercase().contains(&lower_query) || e.description.to_lowercase().contains(&lower_query))
+                    .cloned()
+                    .collect();
+                Task::none()
+            }
             Message::DownloadClicked(entry) => {
                 self.downloading_entry = Some(entry.title.clone());
                 self.download_progress = 0.0;
@@ -88,9 +129,55 @@ impl IpaLibraryScreen {
     }
 
     pub fn view(&self) -> Element<'_, Message> {
-        let mut content = column![].spacing(appearance::THEME_PADDING);
+        if self.is_loading {
+            return container(
+                column![
+                    text(t!("loading")).size(20),
+                    progress_bar(0.0..=100.0, 0.0).style(appearance::p_progress_bar)
+                ]
+                .spacing(10)
+                .align_x(Alignment::Center)
+            )
+            .center_x()
+            .center_y()
+            .width(Fill)
+            .height(Fill)
+            .into();
+        }
 
-        for entry in &self.entries {
+        if let Some(ref err) = self.error {
+            return container(
+                column![
+                    text(format!("Error: {}", err)).style(|_theme: &iced::Theme| iced::widget::text::Style { color: Some(iced::color!(0xff0000)) }),
+                    button(text("Retry")).on_press(Message::FetchLibrary).style(appearance::p_button)
+                ]
+                .spacing(10)
+                .align_x(Alignment::Center)
+            )
+            .center_x()
+            .center_y()
+            .width(Fill)
+            .height(Fill)
+            .into();
+        }
+
+        let search_input = text_input(t!("search"), &self.search_query)
+            .on_input(Message::SearchChanged)
+            .padding(appearance::THEME_PADDING)
+            .size(appearance::THEME_FONT_SIZE + 2.0);
+
+        let mut content = column![search_input].spacing(appearance::THEME_PADDING);
+
+        if self.filtered_entries.is_empty() {
+             content = content.push(
+                container(text(t!("nothing_found")).size(16))
+                    .width(Fill)
+                    .padding(50)
+                    .center_x()
+             );
+        }
+
+        for entry in &self.filtered_entries {
             let is_downloading = self.downloading_entry.as_ref() == Some(&entry.title);
 
             let action_area: Element<Message> = if is_downloading {
@@ -151,6 +238,18 @@ impl IpaLibraryScreen {
 
         container(scrollable(content)).height(Fill).into()
     }
+}
+
+async fn fetch_library_json() -> Result<Vec<IpaEntry>, String> {
+    let client = reqwest::Client::new();
+    let response = client.get(LIBRARY_JSON_URL)
+        .header("User-Agent", "PlumeImpactor")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let entries: Vec<IpaEntry> = response.json().await.map_err(|e| e.to_string())?;
+    Ok(entries)
 }
 
 fn download_blocking(url: String, title: String, tx: &mut mpsc::UnboundedSender<Message>) -> Result<(), String> {

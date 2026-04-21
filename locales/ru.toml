@@ -73,6 +73,10 @@ login_verify = "Verify"
 login_verifying = "Verifying..."
 
 utilities_ipa_library = "IPA Library"
-ipa_library_livecontainer_desc = "LiveContainer enables running iOS apps natively via JIT, utilizing dynamic code signing and injection without a jailbreak. After installation, you must import the generated P12 certificate in settings to finish signing."
-settings_theme = "Theme:"
+ipa_library_livecontainer_desc = "Живой контейнер позволяет запускать iOS-приложения нативно через JIT. После установки вам необходимо импортировать сгенерированный P12-сертификат в настройках."
+loading = "Загрузка..."
+search = "Поиск по названию или описанию..."
+nothing_found = "К сожалению, ничего не найдено"
+install = "Скачать"
+settings_theme = "Тема:"
 
