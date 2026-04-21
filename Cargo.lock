@@ -5773,6 +5773,7 @@ dependencies = [
 name = "plumeimpactor"
 version = "2.2.3"
 dependencies = [
+ "async-stream",
  "auto-launcher",
  "chrono",
  "current_locale",

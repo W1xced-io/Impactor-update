@@ -37,6 +37,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 futures-util = "0.3.32"
 reqwest = { version = "0.13.2", features = ["json", "rustls", "stream"] }
+async-stream = "0.3.6"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 plume_gestalt = { path = "../../crates/plume_gestalt" }

@@ -53,14 +53,7 @@ impl IpaLibraryScreen {
                 let url = entry.download_url.clone();
                 let title = entry.title.clone();
 
-                return Task::future(
-                    async move {
-                        match download_file(url, &title).await {
-                            Ok(path) => Message::DownloadFinished(path),
-                            Err(e) => Message::DownloadError(e),
-                        }
-                    }
-                );
+                return Task::stream(download_stream(url, title));
             }
             Message::DownloadProgress(p) => {
                 self.download_progress = p;
@@ -151,51 +144,55 @@ impl IpaLibraryScreen {
     }
 }
 
-async fn download_file(url: String, title: &str) -> Result<PathBuf, String> {
-    log::info!("Starting download for {} from {}", title, url);
-    let client = reqwest::Client::new();
-    let response = client
-        .get(url)
-        .header("User-Agent", "PlumeImpactor")
-        .send()
-        .await
-        .map_err(|e| {
-            log::error!("Request failed: {:?}", e);
-            e.to_string()
-        })?;
-
-    let _total_size = response.content_length();
-    log::debug!("Content length: {:?}", _total_size);
-
-    let temp_dir = std::env::temp_dir();
-    let file_name = format!("{}.ipa", title.replace(' ', "_"));
-    let dest_path = temp_dir.join(file_name);
-    
-    log::info!("Writing to {:?}", dest_path);
-    let mut file = tokio::fs::File::create(&dest_path).await.map_err(|e| {
-        log::error!("Failed to create file: {:?}", e);
-        e.to_string()
-    })?;
-
-    let mut _downloaded: u64 = 0;
-    let mut stream = response.bytes_stream();
-
-    while let Some(item) = stream.next().await {
-        let chunk = item.map_err(|e| {
-            log::error!("Error reading chunk: {:?}", e);
-            e.to_string()
-        })?;
+fn download_stream(url: String, title: String) -> impl futures_util::Stream<Item = Message> {
+    async_stream::stream! {
+        log::info!("Starting streaming download for {} from {}", title, url);
+        let client = reqwest::Client::new();
         
-        file.write_all(&chunk).await.map_err(|e| {
-            log::error!("Failed to write chunk: {:?}", e);
-            e.to_string()
-        })?;
+        let response = match client.get(url).header("User-Agent", "PlumeImpactor").send().await {
+            Ok(res) => res,
+            Err(e) => {
+                yield Message::DownloadError(e.to_string());
+                return;
+            }
+        };
+
+        let total_size = response.content_length();
+        let temp_dir = std::env::temp_dir();
+        let file_name = format!("{}.ipa", title.replace(' ', "_"));
+        let dest_path = temp_dir.join(file_name);
         
-        _downloaded += chunk.len() as u64;
+        let mut file = match tokio::fs::File::create(&dest_path).await {
+            Ok(f) => f,
+            Err(e) => {
+                yield Message::DownloadError(e.to_string());
+                return;
+            }
+        };
+
+        let mut downloaded: u64 = 0;
+        let mut stream = response.bytes_stream();
+
+        while let Some(item) = stream.next().await {
+            match item {
+                Ok(chunk) => {
+                    if let Err(e) = file.write_all(&chunk).await {
+                        yield Message::DownloadError(e.to_string());
+                        return;
+                    }
+                    downloaded += chunk.len() as u64;
+                    if let Some(total) = total_size {
+                        yield Message::DownloadProgress(downloaded as f32 / total as f32);
+                    }
+                }
+                Err(e) => {
+                    yield Message::DownloadError(e.to_string());
+                    return;
+                }
+            }
+        }
+        
+        let _ = file.flush().await;
+        yield Message::DownloadFinished(dest_path);
     }
-    
-    file.flush().await.ok();
-
-    log::info!("Download finished: {:?}", dest_path);
-    Ok(dest_path)
 }
