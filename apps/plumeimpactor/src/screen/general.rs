@@ -124,7 +124,7 @@ impl GeneralScreen {
         container(
             row![
                 button(appearance::icon_text(
-                    appearance::BOOK,
+                    appearance::FILE,
                     t!("ipa_library"),
                     None
                 ))
