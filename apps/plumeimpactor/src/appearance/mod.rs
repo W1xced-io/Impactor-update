@@ -159,14 +159,17 @@ pub(crate) fn p_progress_bar(theme: &Theme) -> iced::widget::progress_bar::Style
     }
 }
 
-pub(crate) fn s_scrollable(_theme: &Theme) -> iced::widget::scrollable::Style {
+pub(crate) fn s_scrollable(
+    _theme: &Theme,
+    _status: iced::widget::scrollable::Status,
+) -> iced::widget::scrollable::Style {
     iced::widget::scrollable::Style {
         container: iced::widget::container::Style::default(),
         vertical_rail: iced::widget::scrollable::Rail {
             background: None,
             border: iced::Border::default(),
             scroller: iced::widget::scrollable::Scroller {
-                color: Color::TRANSPARENT,
+                background: Some(iced::Background::Color(Color::TRANSPARENT)),
                 border: iced::Border::default(),
             },
         },
@@ -174,10 +177,11 @@ pub(crate) fn s_scrollable(_theme: &Theme) -> iced::widget::scrollable::Style {
             background: None,
             border: iced::Border::default(),
             scroller: iced::widget::scrollable::Scroller {
-                color: Color::TRANSPARENT,
+                background: Some(iced::Background::Color(Color::TRANSPARENT)),
                 border: iced::Border::default(),
             },
         },
         gap: None,
+        auto_scroll: Default::default(),
     }
 }
