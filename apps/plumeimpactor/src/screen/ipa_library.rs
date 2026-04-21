@@ -3,8 +3,9 @@ use iced::{Alignment, Element, Fill, Length, Task};
 use rust_i18n::t;
 use std::path::PathBuf;
 use plume_utils::Package;
-use futures_util::StreamExt;
-use tokio::io::AsyncWriteExt;
+use iced::futures::channel::mpsc;
+use iced::futures::StreamExt;
+use std::io::Write;
 
 use crate::appearance;
 
@@ -53,7 +54,15 @@ impl IpaLibraryScreen {
                 let url = entry.download_url.clone();
                 let title = entry.title.clone();
 
-                return Task::stream(download_stream(url, title));
+                let (mut tx, rx) = mpsc::unbounded();
+
+                std::thread::spawn(move || {
+                    if let Err(e) = download_blocking(url, title, &mut tx) {
+                        let _ = tx.unbounded_send(Message::DownloadError(e));
+                    }
+                });
+
+                return Task::stream(rx);
             }
             Message::DownloadProgress(p) => {
                 self.download_progress = p;
@@ -144,55 +153,42 @@ impl IpaLibraryScreen {
     }
 }
 
-fn download_stream(url: String, title: String) -> impl futures_util::Stream<Item = Message> {
-    async_stream::stream! {
-        log::info!("Starting streaming download for {} from {}", title, url);
-        let client = reqwest::Client::new();
-        
-        let response = match client.get(url).header("User-Agent", "PlumeImpactor").send().await {
-            Ok(res) => res,
-            Err(e) => {
-                yield Message::DownloadError(e.to_string());
-                return;
-            }
-        };
+fn download_blocking(url: String, title: String, tx: &mut mpsc::UnboundedSender<Message>) -> Result<(), String> {
+    log::info!("Starting blocking download for {} from {}", title, url);
+    let client = reqwest::blocking::Client::builder()
+        .user_agent("PlumeImpactor")
+        .build()
+        .map_err(|e| e.to_string())?;
 
-        let total_size = response.content_length();
-        let temp_dir = std::env::temp_dir();
-        let file_name = format!("{}.ipa", title.replace(' ', "_"));
-        let dest_path = temp_dir.join(file_name);
-        
-        let mut file = match tokio::fs::File::create(&dest_path).await {
-            Ok(f) => f,
-            Err(e) => {
-                yield Message::DownloadError(e.to_string());
-                return;
-            }
-        };
+    let mut response = client.get(url).send().map_err(|e| e.to_string())?;
 
-        let mut downloaded: u64 = 0;
-        let mut stream = response.bytes_stream();
+    let total_size = response.content_length();
+    let temp_dir = std::env::temp_dir();
+    let file_name = format!("{}.ipa", title.replace(' ', "_"));
+    let dest_path = temp_dir.join(file_name);
 
-        while let Some(item) = stream.next().await {
-            match item {
-                Ok(chunk) => {
-                    if let Err(e) = file.write_all(&chunk).await {
-                        yield Message::DownloadError(e.to_string());
-                        return;
-                    }
-                    downloaded += chunk.len() as u64;
-                    if let Some(total) = total_size {
-                        yield Message::DownloadProgress(downloaded as f32 / total as f32);
-                    }
-                }
-                Err(e) => {
-                    yield Message::DownloadError(e.to_string());
-                    return;
-                }
-            }
+    let mut file = std::fs::File::create(&dest_path).map_err(|e| e.to_string())?;
+
+    let mut downloaded: u64 = 0;
+    let mut buffer = [0u8; 8192];
+
+    loop {
+        let n = response.read(&mut buffer).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
         }
-        
-        let _ = file.flush().await;
-        yield Message::DownloadFinished(dest_path);
+
+        file.write_all(&buffer[..n]).map_err(|e| e.to_string())?;
+        downloaded += n as u64;
+
+        if let Some(total) = total_size {
+            let progress = downloaded as f32 / total as f32;
+            let _ = tx.unbounded_send(Message::DownloadProgress(progress));
+        }
     }
+
+    let _ = tx.unbounded_send(Message::DownloadFinished(dest_path));
+    Ok(())
 }
+
+use std::io::Read;
