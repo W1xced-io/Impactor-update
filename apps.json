@@ -1,7 +1,7 @@
 [
   {
     "title": "LiveContainer",
-    "description": "Run nested apps within a single application via JIT.",
+    "description": "Run iOS apps natively with JIT support and bypass the 3-app limit without a jailbreak.",
     "download_url": "https://github.com/LiveContainer/LiveContainer/releases/latest/download/LiveContainer.ipa"
   }
 ]
