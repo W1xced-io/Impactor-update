@@ -2,10 +2,10 @@
   {
     "title": "LiveContainer",
     "description": "LiveContainer allows running iOS apps natively via JIT, using dynamic code signing and injection without a jailbreak.",
-    "version": "2.1.3",
+    "version": "Latest",
     "bundle_id": "com.kdt.livecontainer",
-    "icon_url": "https://raw.githubusercontent.com/Khanhduytran0/LiveContainer/main/LiveContainer/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60%403x.png",
-    "download_url": "https://github.com/Khanhduytran0/LiveContainer/releases/download/v2.1.3/LiveContainer.ipa",
+    "icon_url": "https://raw.githubusercontent.com/LiveContainer/LiveContainer/main/LiveContainer/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60%403x.png",
+    "download_url": "https://github.com/LiveContainer/LiveContainer/releases/latest/download/LiveContainer.ipa",
     "category": "container"
   },
   {
@@ -29,10 +29,10 @@
   {
     "title": "Lara",
     "description": "Multi-tool for iOS 15.0-18.1. Features: Font Overwrite, File Manager (Full Disk r/w), 3 App Bypass, Performance tweaks and more.",
-    "version": "1.1.1",
+    "version": "Latest",
     "bundle_id": "com.roooot.lara",
     "icon_url": "https://raw.githubusercontent.com/rooootdev/lara/main/Lara/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60%403x.png",
-    "download_url": "https://github.com/rooootdev/lara/releases/download/v1.1.1/lara.ipa",
+    "download_url": "https://github.com/rooootdev/lara/releases/latest/download/lara.ipa",
     "category": "utility"
   }
 ]

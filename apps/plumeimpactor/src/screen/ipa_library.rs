@@ -36,6 +36,7 @@ pub enum Message {
     DownloadFinished(PathBuf),
     DownloadError(String),
     NavigateToInstaller(Package),
+    Back,
 }
 
 pub struct IpaLibraryScreen {
@@ -142,6 +143,7 @@ impl IpaLibraryScreen {
                 Task::none()
             }
             Message::NavigateToInstaller(_) => Task::none(),
+            Message::Back => Task::none(),
         }
     }
 
@@ -190,6 +192,13 @@ impl IpaLibraryScreen {
             .into();
         }
 
+        let back_button = button(row![
+            text(appearance::CHEVRON_BACK).font(appearance::icon_font()),
+            text(t!("back"))
+        ].spacing(5))
+        .on_press(Message::Back)
+        .style(appearance::s_button);
+
         let search_input = text_input(&t!("search").to_string(), &self.search_query)
             .on_input(Message::SearchChanged)
             .padding(appearance::THEME_PADDING)
@@ -209,7 +218,9 @@ impl IpaLibraryScreen {
         }))
         .spacing(appearance::THEME_PADDING);
  
-        let mut content = column![search_input, category_buttons].spacing(appearance::THEME_PADDING);
+        let header = row![back_button, search_input].spacing(appearance::THEME_PADDING).align_y(Alignment::Center);
+
+        let mut content = column![header, category_buttons].spacing(appearance::THEME_PADDING);
 
         if self.filtered_entries.is_empty() {
              content = content.push(
