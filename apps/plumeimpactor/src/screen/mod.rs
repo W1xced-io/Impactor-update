@@ -138,6 +138,9 @@ impl Impactor {
         crate::macos_app::set_main_window_visible(true);
         crate::macos_app::reset_activation_state();
 
+        let app_settings = crate::defaults::AppSettings::load();
+        rust_i18n::set_locale(&app_settings.language);
+
         (
             Self {
                 current_screen: ImpactorScreen::Main(general::GeneralScreen::new()),
@@ -150,7 +153,7 @@ impl Impactor {
                 login_windows: std::collections::HashMap::new(),
                 pending_installation: false,
                 certificate_reset_queue: VecDeque::new(),
-                app_settings: crate::defaults::AppSettings::load(),
+                app_settings,
             },
             open_task,
         )
@@ -599,6 +602,12 @@ impl Impactor {
                         settings::Message::ThemeSelected(theme) => {
                             self.app_settings.theme = theme;
                             let _ = self.app_settings.save();
+                            Task::none()
+                        }
+                        settings::Message::LanguageSelected(code) => {
+                            self.app_settings.language = code.clone();
+                            let _ = self.app_settings.save();
+                            rust_i18n::set_locale(&code);
                             Task::none()
                         }
                         _ => screen.update(msg).map(Message::SettingsScreen),

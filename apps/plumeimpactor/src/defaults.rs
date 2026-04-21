@@ -12,12 +12,19 @@ use crate::appearance;
 pub struct AppSettings {
     #[serde(default)]
     pub theme: appearance::PlumeTheme,
+    #[serde(default = "default_language")]
+    pub language: String,
+}
+
+fn default_language() -> String {
+    "en".to_string()
 }
 
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
             theme: appearance::PlumeTheme::PlumeDark,
+            language: default_language(),
         }
     }
 }

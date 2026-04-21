@@ -30,6 +30,22 @@ pub enum Message {
     TeamsLoaded(String, Vec<Team>),
     ToggleAutoStart(bool),
     ThemeSelected(appearance::PlumeTheme),
+    LanguageSelected(String),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Language {
+    pub code: String,
+}
+
+impl std::fmt::Display for Language {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.code.as_str() {
+            "en" => write!(f, "English"),
+            "ru" => write!(f, "Русский"),
+            _ => write!(f, "{}", self.code),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -160,6 +176,26 @@ impl SettingsScreen {
         }
 
         let auto_start_enabled = crate::startup::auto_start_enabled();
+        let languages = vec![
+            Language { code: "en".to_string() },
+            Language { code: "ru".to_string() },
+        ];
+        let current_lang = Language { code: rust_i18n::locale() };
+
+        content = content.push(
+            row![
+                text(t!("settings_language")),
+                pick_list(
+                    languages,
+                    Some(current_lang),
+                    |l: Language| Message::LanguageSelected(l.code)
+                )
+                .style(appearance::s_pick_list)
+            ]
+            .spacing(appearance::THEME_PADDING)
+            .align_y(Alignment::Center),
+        );
+
         content = content.push(
             row![
                 text(t!("settings_theme")),
