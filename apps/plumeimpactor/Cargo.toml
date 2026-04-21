@@ -8,7 +8,7 @@ repository.workspace = true
 
 [dependencies]
 idevice.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["fs", "io-util"] }
 thiserror.workspace = true
 uuid.workspace = true
 plist.workspace = true

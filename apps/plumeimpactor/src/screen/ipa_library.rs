@@ -4,7 +4,7 @@ use rust_i18n::t;
 use std::path::PathBuf;
 use plume_utils::Package;
 use futures_util::StreamExt;
-use std::io::Write;
+use tokio::io::AsyncWriteExt;
 
 use crate::appearance;
 
@@ -152,36 +152,50 @@ impl IpaLibraryScreen {
 }
 
 async fn download_file(url: String, title: &str) -> Result<PathBuf, String> {
+    log::info!("Starting download for {} from {}", title, url);
     let client = reqwest::Client::new();
     let response = client
         .get(url)
         .header("User-Agent", "PlumeImpactor")
         .send()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            log::error!("Request failed: {:?}", e);
+            e.to_string()
+        })?;
 
-    let _total_size = response
-        .content_length()
-        .ok_or_else(|| "Failed to get content length".to_string())?;
+    let _total_size = response.content_length();
+    log::debug!("Content length: {:?}", _total_size);
 
     let temp_dir = std::env::temp_dir();
     let file_name = format!("{}.ipa", title.replace(' ', "_"));
     let dest_path = temp_dir.join(file_name);
-    let mut file = std::fs::File::create(&dest_path).map_err(|e| e.to_string())?;
+    
+    log::info!("Writing to {:?}", dest_path);
+    let mut file = tokio::fs::File::create(&dest_path).await.map_err(|e| {
+        log::error!("Failed to create file: {:?}", e);
+        e.to_string()
+    })?;
 
     let mut _downloaded: u64 = 0;
     let mut stream = response.bytes_stream();
 
     while let Some(item) = stream.next().await {
-        let chunk = item.map_err(|e| e.to_string())?;
-        file.write_all(&chunk).map_err(|e| e.to_string())?;
-        _downloaded += chunk.len() as u64;
+        let chunk = item.map_err(|e| {
+            log::error!("Error reading chunk: {:?}", e);
+            e.to_string()
+        })?;
         
-        // In a real Iced app, we'd need a way to communicate progress back to the UI.
-        // Task::run makes this tricky for intermediate updates.
-        // For now, let's just finish the download.
-        // To get real-time progress we should use a custom channel.
+        file.write_all(&chunk).await.map_err(|e| {
+            log::error!("Failed to write chunk: {:?}", e);
+            e.to_string()
+        })?;
+        
+        _downloaded += chunk.len() as u64;
     }
+    
+    file.flush().await.ok();
 
+    log::info!("Download finished: {:?}", dest_path);
     Ok(dest_path)
 }
