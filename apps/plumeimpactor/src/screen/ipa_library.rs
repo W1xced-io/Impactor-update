@@ -16,6 +16,12 @@ pub struct IpaEntry {
     pub download_url: String,
     #[serde(default)]
     pub icon_url: Option<String>,
+    #[serde(default = "default_category")]
+    pub category: String,
+}
+
+fn default_category() -> String {
+    "utility".to_string()
 }
 
 #[derive(Debug, Clone)]
@@ -24,6 +30,7 @@ pub enum Message {
     LibraryFetched(Vec<IpaEntry>),
     LibraryFetchError(String),
     SearchChanged(String),
+    CategoryChanged(String),
     DownloadClicked(IpaEntry),
     DownloadProgress(f32),
     DownloadFinished(PathBuf),
@@ -35,6 +42,7 @@ pub struct IpaLibraryScreen {
     pub entries: Vec<IpaEntry>,
     pub filtered_entries: Vec<IpaEntry>,
     pub search_query: String,
+    pub selected_category: String,
     pub downloading_entry: Option<String>,
     pub download_progress: f32,
     pub is_loading: bool,
@@ -49,6 +57,7 @@ impl IpaLibraryScreen {
             entries: Vec::new(),
             filtered_entries: Vec::new(),
             search_query: String::new(),
+            selected_category: "all".to_string(),
             downloading_entry: None,
             download_progress: 0.0,
             is_loading: true,
@@ -79,7 +88,7 @@ impl IpaLibraryScreen {
             Message::LibraryFetched(entries) => {
                 self.is_loading = false;
                 self.entries = entries.clone();
-                self.filtered_entries = entries;
+                self.apply_filter();
                 Task::none()
             }
             Message::LibraryFetchError(e) => {
@@ -88,12 +97,13 @@ impl IpaLibraryScreen {
                 Task::none()
             }
             Message::SearchChanged(query) => {
-                self.search_query = query.clone();
-                let lower_query = query.to_lowercase();
-                self.filtered_entries = self.entries.iter()
-                    .filter(|e| e.title.to_lowercase().contains(&lower_query) || e.description.to_lowercase().contains(&lower_query))
-                    .cloned()
-                    .collect();
+                self.search_query = query;
+                self.apply_filter();
+                Task::none()
+            }
+            Message::CategoryChanged(category) => {
+                self.selected_category = category;
+                self.apply_filter();
                 Task::none()
             }
             Message::DownloadClicked(entry) => {
@@ -135,6 +145,18 @@ impl IpaLibraryScreen {
         }
     }
 
+    pub fn apply_filter(&mut self) {
+        let lower_query = self.search_query.to_lowercase();
+        self.filtered_entries = self.entries.iter()
+            .filter(|e| {
+                let matches_search = e.title.to_lowercase().contains(&lower_query) || e.description.to_lowercase().contains(&lower_query);
+                let matches_category = self.selected_category == "all" || e.category == self.selected_category;
+                matches_search && matches_category
+            })
+            .cloned()
+            .collect();
+    }
+
     pub fn view(&self) -> Element<'_, Message> {
         if self.is_loading {
             return container(
@@ -173,7 +195,20 @@ impl IpaLibraryScreen {
             .padding(appearance::THEME_PADDING)
             .size(appearance::THEME_FONT_SIZE + 2.0);
 
-        let mut content = column![search_input].spacing(appearance::THEME_PADDING);
+        let categories = ["all", "jailbreak", "utility", "container"];
+        let category_buttons = row(categories.iter().map(|cat| {
+            let label = t!(&format!("category_{}", cat));
+            let is_selected = &self.selected_category == cat;
+            
+            button(text(label).align_x(iced::Center))
+                .on_press(Message::CategoryChanged(cat.to_string()))
+                .style(if is_selected { appearance::p_button } else { appearance::s_button })
+                .width(iced::Length::Fill)
+                .into()
+        }))
+        .spacing(appearance::THEME_PADDING);
+ 
+        let mut content = column![search_input, category_buttons].spacing(appearance::THEME_PADDING);
 
         if self.filtered_entries.is_empty() {
              content = content.push(

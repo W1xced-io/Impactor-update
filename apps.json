@@ -1,7 +1,29 @@
 [
   {
     "title": "LiveContainer",
-    "description": "Run iOS apps natively with JIT support and bypass the 3-app limit without a jailbreak.",
-    "download_url": "https://github.com/LiveContainer/LiveContainer/releases/latest/download/LiveContainer.ipa"
+    "description": "LiveContainer allows running iOS apps natively via JIT, using dynamic code signing and injection without a jailbreak.",
+    "version": "2.1.3",
+    "bundle_id": "com.kdt.livecontainer",
+    "icon_url": "https://raw.githubusercontent.com/Khanhduytran0/LiveContainer/main/LiveContainer/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60%403x.png",
+    "download_url": "https://github.com/Khanhduytran0/LiveContainer/releases/download/v2.1.3/LiveContainer.ipa",
+    "category": "container"
+  },
+  {
+    "title": "Dopamine",
+    "description": "Dopamine is a semi-untethered jailbreak for iOS 15.0 - 16.6.1 (A12+).",
+    "version": "2.1",
+    "bundle_id": "com.opa334.Dopamine",
+    "icon_url": "https://raw.githubusercontent.com/opa334/Dopamine/master/Dopamine/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60%403x.png",
+    "download_url": "https://github.com/opa334/Dopamine/releases/download/2.1/Dopamine.ipa",
+    "category": "jailbreak"
+  },
+  {
+    "title": "FilzaEscaped",
+    "description": "File manager for iOS with system access (via MacDirtyCow/KFD).",
+    "version": "1.0",
+    "bundle_id": "com.basrvs.FilzaEscaped",
+    "icon_url": "https://raw.githubusercontent.com/BasVellekoop/FilzaEscaped16/main/Filza/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60%403x.png",
+    "download_url": "https://github.com/BasVellekoop/FilzaEscaped16/releases/download/1.0/Filza.ipa",
+    "category": "utility"
   }
 ]
