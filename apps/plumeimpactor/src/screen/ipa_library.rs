@@ -61,7 +61,7 @@ impl IpaLibraryScreen {
             Message::FetchLibrary => {
                 self.is_loading = true;
                 self.error = None;
-                let (mut tx, rx) = mpsc::unbounded();
+                let (tx, rx) = mpsc::unbounded();
 
                 std::thread::spawn(move || {
                     match fetch_library_blocking() {

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use iced::widget::{button, checkbox, column, container, pick_list, row, scrollable, text};
-use iced::{Alignment, Element, Fill, Task};
+use iced::{Alignment, Element, Fill, Length, Task};
 use plume_store::AccountStore;
 use rust_i18n::t;
 
