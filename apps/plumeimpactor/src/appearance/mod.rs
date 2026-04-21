@@ -182,6 +182,11 @@ pub(crate) fn s_scrollable(
             },
         },
         gap: None,
-        auto_scroll: None,
+        auto_scroll: iced::widget::scrollable::AutoScroll {
+            background: iced::Background::Color(Color::TRANSPARENT),
+            border: iced::Border::default(),
+            shadow: iced::Shadow::default(),
+            icon: Color::TRANSPARENT,
+        },
     }
 }
