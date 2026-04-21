@@ -470,6 +470,7 @@ impl Impactor {
                         self.current_screen = ImpactorScreen::IpaLibrary(
                             ipa_library::IpaLibraryScreen::new(),
                         );
+                        return Task::done(Message::IpaLibraryScreen(ipa_library::Message::FetchLibrary));
                     } else if let general::Message::NavigateToUtilities = msg {
                         let rppairing_enabled = match &self.current_screen {
                             ImpactorScreen::Utilities(screen) => screen.rppairing_enabled,
