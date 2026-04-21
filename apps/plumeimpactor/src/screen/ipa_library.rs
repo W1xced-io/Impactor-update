@@ -4,7 +4,6 @@ use rust_i18n::t;
 use std::path::PathBuf;
 use plume_utils::Package;
 use iced::futures::channel::mpsc;
-use iced::futures::StreamExt;
 use std::io::Write;
 use serde::{Deserialize, Serialize};
 
@@ -138,8 +137,8 @@ impl IpaLibraryScreen {
                 .spacing(10)
                 .align_x(Alignment::Center)
             )
-            .center_x()
-            .center_y()
+            .center_x(Fill)
+            .center_y(Fill)
             .width(Fill)
             .height(Fill)
             .into();
@@ -154,14 +153,14 @@ impl IpaLibraryScreen {
                 .spacing(10)
                 .align_x(Alignment::Center)
             )
-            .center_x()
-            .center_y()
+            .center_x(Fill)
+            .center_y(Fill)
             .width(Fill)
             .height(Fill)
             .into();
         }
 
-        let search_input = text_input(t!("search"), &self.search_query)
+        let search_input = text_input(&t!("search").to_string(), &self.search_query)
             .on_input(Message::SearchChanged)
             .padding(appearance::THEME_PADDING)
             .size(appearance::THEME_FONT_SIZE + 2.0);
@@ -170,10 +169,10 @@ impl IpaLibraryScreen {
 
         if self.filtered_entries.is_empty() {
              content = content.push(
-                container(text(t!("nothing_found")).size(16))
+                container(text(t!("nothing_found").to_string()).size(16))
                     .width(Fill)
                     .padding(50)
-                    .center_x()
+                    .center_x(Fill)
              );
         }
 

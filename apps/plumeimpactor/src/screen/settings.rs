@@ -180,7 +180,7 @@ impl SettingsScreen {
             Language { code: "en".to_string() },
             Language { code: "ru".to_string() },
         ];
-        let current_lang = Language { code: rust_i18n::locale() };
+        let current_lang = Language { code: rust_i18n::locale().to_string() };
 
         content = content.push(
             row![

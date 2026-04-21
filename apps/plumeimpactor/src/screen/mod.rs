@@ -274,19 +274,22 @@ impl Impactor {
                     }
                 }
 
-                self.navigate_to_screen(screen_type.clone());
+                let task = self.navigate_to_screen(screen_type.clone());
 
                 if screen_type == ImpactorScreenType::Utilities {
                     let rppairing_enabled = match &self.current_screen {
                         ImpactorScreen::Utilities(screen) => screen.rppairing_enabled,
                         _ => false,
                     };
-                    return Task::done(Message::UtilitiesScreen(utilties::Message::RefreshApps(
-                        rppairing_enabled,
-                    )));
+                    return Task::batch(vec![
+                        task,
+                        Task::done(Message::UtilitiesScreen(utilties::Message::RefreshApps(
+                            rppairing_enabled,
+                        )))
+                    ]);
                 }
 
-                Task::none()
+                task
             }
             Message::NextScreen => {
                 let next_screen = match self.current_screen {
@@ -298,38 +301,34 @@ impl Impactor {
                     ImpactorScreen::IpaLibrary(_) => return Task::none(),
                 };
 
-                self.navigate_to_screen(next_screen);
-                Task::none()
+                self.navigate_to_screen(next_screen)
             }
             Message::PreviousScreen => match &self.current_screen {
                 ImpactorScreen::Main(_) => Task::none(),
                 ImpactorScreen::Utilities(_) => {
-                    self.navigate_to_screen(ImpactorScreenType::Main);
-                    Task::none()
+                    self.navigate_to_screen(ImpactorScreenType::Main)
                 }
                 ImpactorScreen::Installer(_) => {
-                    self.navigate_to_screen(ImpactorScreenType::Main);
-                    Task::none()
+                    self.navigate_to_screen(ImpactorScreenType::Main)
                 }
                 ImpactorScreen::Progress(_) => {
                     if let Some(prev) = self.previous_screen.take() {
                         self.current_screen = *prev;
+                        Task::none()
                     } else {
-                        self.navigate_to_screen(ImpactorScreenType::Main);
+                        self.navigate_to_screen(ImpactorScreenType::Main)
                     }
-                    Task::none()
                 }
                 ImpactorScreen::Settings(_) => {
                     if let Some(prev_screen) = self.previous_screen.take() {
                         self.current_screen = *prev_screen;
+                        Task::none()
                     } else {
-                        self.navigate_to_screen(ImpactorScreenType::Main);
+                        self.navigate_to_screen(ImpactorScreenType::Main)
                     }
-                    Task::none()
                 }
                 ImpactorScreen::IpaLibrary(_) => {
-                    self.navigate_to_screen(ImpactorScreenType::Utilities);
-                    Task::none()
+                    self.navigate_to_screen(ImpactorScreenType::Utilities)
                 }
             },
             Message::TrayIconClicked => Task::done(Message::ShowWindow),
@@ -1003,7 +1002,7 @@ impl Impactor {
             .into()
     }
 
-    fn navigate_to_screen(&mut self, screen_type: ImpactorScreenType) {
+    fn navigate_to_screen(&mut self, screen_type: ImpactorScreenType) -> Task<Message> {
         match screen_type {
             ImpactorScreenType::Main => {
                 if let ImpactorScreen::Installer(installer) = &self.current_screen {
@@ -1027,7 +1026,7 @@ impl Impactor {
             }
             ImpactorScreenType::IpaLibrary => {
                 self.current_screen = ImpactorScreen::IpaLibrary(ipa_library::IpaLibraryScreen::new());
-                self.previous_screen = Some(Box::new(ImpactorScreen::main_menu()));
+                self.previous_screen = Some(Box::new(ImpactorScreen::Main(general::GeneralScreen::new())));
                 return Task::done(Message::IpaLibraryScreen(ipa_library::Message::FetchLibrary));
             }
             _ => {}
