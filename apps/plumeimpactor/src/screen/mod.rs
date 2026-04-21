@@ -466,6 +466,10 @@ impl Impactor {
                         self.current_screen = ImpactorScreen::Installer(
                             package::PackageScreen::new(Some(package), options),
                         );
+                    } else if let general::Message::NavigateToIpaLibrary = msg {
+                        self.current_screen = ImpactorScreen::IpaLibrary(
+                            ipa_library::IpaLibraryScreen::new(),
+                        );
                     } else if let general::Message::NavigateToUtilities = msg {
                         let rppairing_enabled = match &self.current_screen {
                             ImpactorScreen::Utilities(screen) => screen.rppairing_enabled,

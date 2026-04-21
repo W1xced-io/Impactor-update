@@ -19,6 +19,7 @@ pub enum Message {
     OpenFileDialog,
     FileSelected(Option<std::path::PathBuf>),
     NavigateToInstaller(plume_utils::Package),
+    NavigateToIpaLibrary,
     NavigateToUtilities,
     OpenGitHub,
     OpenDonate,
@@ -123,11 +124,11 @@ impl GeneralScreen {
         container(
             row![
                 button(appearance::icon_text(
-                    appearance::WRENCH,
-                    t!("utilities"),
+                    appearance::BOOK,
+                    t!("ipa_library"),
                     None
                 ))
-                .on_press(Message::NavigateToUtilities)
+                .on_press(Message::NavigateToIpaLibrary)
                 .width(Fill)
                 .style(appearance::s_button),
                 button(appearance::icon_text(
@@ -137,7 +138,15 @@ impl GeneralScreen {
                 ))
                 .on_press(Message::OpenFileDialog)
                 .width(Fill)
-                .style(appearance::s_button)
+                .style(appearance::s_button),
+                button(appearance::icon_text(
+                    appearance::WRENCH,
+                    t!("utilities"),
+                    None
+                ))
+                .on_press(Message::NavigateToUtilities)
+                .width(Fill)
+                .style(appearance::s_button),
             ]
             .spacing(appearance::THEME_PADDING),
         )
