@@ -224,11 +224,21 @@ impl IpaLibraryScreen {
             let is_downloading = self.downloading_entry.as_ref() == Some(&entry.title);
 
             let action_area: Element<Message> = if is_downloading {
+                let progress_val = if self.download_progress > 0.0 {
+                    self.download_progress * 100.0
+                } else {
+                    5.0 // Indeterminate starting state
+                };
+
                 column![
-                    container(progress_bar(0.0..=100.0, self.download_progress * 100.0)
+                    container(progress_bar(0.0..=100.0, progress_val)
                         .style(appearance::p_progress_bar))
                         .height(5),
-                    text(format!("{:.0}%", self.download_progress * 100.0))
+                    text(if self.download_progress > 0.0 {
+                        format!("{:.0}%", self.download_progress * 100.0)
+                    } else {
+                        t!("loading").to_string()
+                    })
                         .size(10)
                         .style(|_theme: &iced::Theme| iced::widget::text::Style {
                             color: Some(appearance::lighten(iced::color!(0x000000), 0.5)),
@@ -279,7 +289,7 @@ impl IpaLibraryScreen {
             );
         }
 
-        container(scrollable(content)).height(Fill).into()
+        container(scrollable(content).style(appearance::s_scrollable)).height(Fill).into()
     }
 }
 

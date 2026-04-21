@@ -158,3 +158,26 @@ pub(crate) fn p_progress_bar(theme: &Theme) -> iced::widget::progress_bar::Style
         },
     }
 }
+
+pub(crate) fn s_scrollable(_theme: &Theme) -> iced::widget::scrollable::Style {
+    iced::widget::scrollable::Style {
+        container: iced::widget::container::Style::default(),
+        vertical_rail: iced::widget::scrollable::Rail {
+            background: None,
+            border: iced::Border::default(),
+            scroller: iced::widget::scrollable::Scroller {
+                color: Color::TRANSPARENT,
+                border: iced::Border::default(),
+            },
+        },
+        horizontal_rail: iced::widget::scrollable::Rail {
+            background: None,
+            border: iced::Border::default(),
+            scroller: iced::widget::scrollable::Scroller {
+                color: Color::TRANSPARENT,
+                border: iced::Border::default(),
+            },
+        },
+        gap: None,
+    }
+}
