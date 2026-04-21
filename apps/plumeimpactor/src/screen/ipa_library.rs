@@ -197,7 +197,8 @@ impl IpaLibraryScreen {
 
         let categories = ["all", "jailbreak", "utility", "container"];
         let category_buttons = row(categories.iter().map(|cat| {
-            let label = t!(&format!("category_{}", cat));
+            let key = format!("category_{}", cat);
+            let label = t!(&key).to_string();
             let is_selected = &self.selected_category == cat;
             
             button(text(label).align_x(iced::Center))
