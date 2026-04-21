@@ -61,12 +61,20 @@ impl IpaLibraryScreen {
             Message::FetchLibrary => {
                 self.is_loading = true;
                 self.error = None;
-                return Task::future(async move {
-                    match fetch_library_json().await {
-                        Ok(entries) => Message::LibraryFetched(entries),
-                        Err(e) => Message::LibraryFetchError(e),
+                let (mut tx, rx) = mpsc::unbounded();
+
+                std::thread::spawn(move || {
+                    match fetch_library_blocking() {
+                        Ok(entries) => {
+                            let _ = tx.unbounded_send(Message::LibraryFetched(entries));
+                        }
+                        Err(e) => {
+                            let _ = tx.unbounded_send(Message::LibraryFetchError(e));
+                        }
                     }
                 });
+
+                return Task::stream(rx);
             }
             Message::LibraryFetched(entries) => {
                 self.is_loading = false;
@@ -239,15 +247,17 @@ impl IpaLibraryScreen {
     }
 }
 
-async fn fetch_library_json() -> Result<Vec<IpaEntry>, String> {
-    let client = reqwest::Client::new();
-    let response = client.get(LIBRARY_JSON_URL)
-        .header("User-Agent", "PlumeImpactor")
-        .send()
-        .await
+fn fetch_library_blocking() -> Result<Vec<IpaEntry>, String> {
+    let client = reqwest::blocking::Client::builder()
+        .user_agent("PlumeImpactor")
+        .build()
         .map_err(|e| e.to_string())?;
 
-    let entries: Vec<IpaEntry> = response.json().await.map_err(|e| e.to_string())?;
+    let response = client.get(LIBRARY_JSON_URL)
+        .send()
+        .map_err(|e| e.to_string())?;
+
+    let entries: Vec<IpaEntry> = response.json().map_err(|e| e.to_string())?;
     Ok(entries)
 }
 

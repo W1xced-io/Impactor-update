@@ -43,6 +43,12 @@ impl std::fmt::Display for Language {
         match self.code.as_str() {
             "en" => write!(f, "English"),
             "ru" => write!(f, "Русский"),
+            "pl" => write!(f, "Polski"),
+            "de" => write!(f, "Deutsch"),
+            "fr" => write!(f, "Français"),
+            "it" => write!(f, "Italiano"),
+            "fi" => write!(f, "Suomi"),
+            "zh" => write!(f, "中文"),
             _ => write!(f, "{}", self.code),
         }
     }
@@ -179,36 +185,45 @@ impl SettingsScreen {
         let languages = vec![
             Language { code: "en".to_string() },
             Language { code: "ru".to_string() },
+            Language { code: "de".to_string() },
+            Language { code: "fi".to_string() },
+            Language { code: "fr".to_string() },
+            Language { code: "it".to_string() },
+            Language { code: "pl".to_string() },
+            Language { code: "zh".to_string() },
         ];
         let current_lang = Language { code: rust_i18n::locale().to_string() };
 
-        content = content.push(
+        let settings_rows = column![
             row![
-                text(t!("settings_language")),
+                text(t!("settings_language")).width(Length::FillPortion(1)),
                 pick_list(
                     languages,
                     Some(current_lang),
                     |l: Language| Message::LanguageSelected(l.code)
                 )
                 .style(appearance::s_pick_list)
+                .width(Length::FillPortion(2))
             ]
             .spacing(appearance::THEME_PADDING)
             .align_y(Alignment::Center),
-        );
 
-        content = content.push(
             row![
-                text(t!("settings_theme")),
+                text(t!("settings_theme")).width(Length::FillPortion(1)),
                 pick_list(
                     appearance::PlumeTheme::ALL,
                     Some(current_theme),
                     Message::ThemeSelected
                 )
                 .style(appearance::s_pick_list)
+                .width(Length::FillPortion(2))
             ]
             .spacing(appearance::THEME_PADDING)
             .align_y(Alignment::Center),
-        );
+        ]
+        .spacing(appearance::THEME_PADDING * 2.0); // Doubled spacing
+
+        content = content.push(settings_rows);
         content = content.push(self.view_auto_start_toggle(auto_start_enabled));
         content = content.push(self.view_account_buttons(selected_index));
 
