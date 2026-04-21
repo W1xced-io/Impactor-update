@@ -169,7 +169,7 @@ pub(crate) fn s_scrollable(
             background: None,
             border: iced::Border::default(),
             scroller: iced::widget::scrollable::Scroller {
-                background: Some(iced::Background::Color(Color::TRANSPARENT)),
+                background: iced::Background::Color(Color::TRANSPARENT),
                 border: iced::Border::default(),
             },
         },
@@ -177,11 +177,11 @@ pub(crate) fn s_scrollable(
             background: None,
             border: iced::Border::default(),
             scroller: iced::widget::scrollable::Scroller {
-                background: Some(iced::Background::Color(Color::TRANSPARENT)),
+                background: iced::Background::Color(Color::TRANSPARENT),
                 border: iced::Border::default(),
             },
         },
         gap: None,
-        auto_scroll: Default::default(),
+        auto_scroll: None,
     }
 }
