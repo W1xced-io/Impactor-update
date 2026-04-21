@@ -499,17 +499,7 @@ impl Impactor {
                     Task::none()
                 }
             }
-            Message::IpaLibraryScreen(msg) => {
-                if let ImpactorScreen::IpaLibrary(ref mut screen) = self.current_screen {
-                    if let ipa_library::Message::Back = msg {
-                         self.current_screen = ImpactorScreen::Main(general::GeneralScreen::new());
-                         return Task::none();
-                    }
-                    screen.update(msg).map(Message::IpaLibraryScreen)
-                } else {
-                    Task::none()
-                }
-            }
+
             Message::SettingsScreen(msg) => {
                 if let ImpactorScreen::Settings(ref mut screen) = self.current_screen {
                     match msg {
@@ -681,6 +671,10 @@ impl Impactor {
             }
             Message::IpaLibraryScreen(msg) => {
                 if let ImpactorScreen::IpaLibrary(ref mut screen) = self.current_screen {
+                    if let ipa_library::Message::Back = msg {
+                         self.current_screen = ImpactorScreen::Main(general::GeneralScreen::new());
+                         return Task::none();
+                    }
                     let task = screen.update(msg.clone()).map(Message::IpaLibraryScreen);
                     if let ipa_library::Message::NavigateToInstaller(package) = msg {
                         let mut options = SignerOptions::default();

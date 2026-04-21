@@ -33,10 +33,10 @@ fn get_local_icon(path: &str) -> Option<iced::widget::image::Handle> {
     }
     
     let bytes: Option<&'static [u8]> = match path {
-        "icons/livecontainer.png" | "livecontainer.png" => Some(include_bytes!("../../../../../icons/livecontainer.png")),
-        "icons/Dopamine.png" | "Dopamine.png" => Some(include_bytes!("../../../../../icons/Dopamine.png")),
-        "icons/TrollInstallerX.png" | "TrollInstallerX.png" => Some(include_bytes!("../../../../../icons/TrollInstallerX.png")),
-        "icons/lara.png" | "lara.png" => Some(include_bytes!("../../../../../icons/lara.png")),
+        "icons/livecontainer.png" | "livecontainer.png" => Some(include_bytes!("../../../../icons/livecontainer.png")),
+        "icons/Dopamine.png" | "Dopamine.png" => Some(include_bytes!("../../../../icons/Dopamine.png")),
+        "icons/TrollInstallerX.png" | "TrollInstallerX.png" => Some(include_bytes!("../../../../icons/TrollInstallerX.png")),
+        "icons/lara.png" | "lara.png" => Some(include_bytes!("../../../../icons/lara.png")),
         _ => None,
     };
     
@@ -227,10 +227,7 @@ impl IpaLibraryScreen {
             .into();
         }
 
-        let back_button = button(row![
-            text(appearance::CHEVRON_BACK).font(appearance::icon_font()),
-            text(t!("back"))
-        ].spacing(5))
+        let back_button = button(appearance::icon_text(appearance::CHEVRON_BACK, t!("back"), None))
         .on_press(Message::Back)
         .style(appearance::s_button);
 
